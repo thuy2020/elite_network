@@ -1,0 +1,7 @@
+from,to,aff_gen,aff_spec,yr
+a,e,hometown,saigon,5
+b,a,batt,south,2
+b,c,uni,hn,2
+c,d,work,trasp,3
+d,c,work,tr,3
+e,b,uni,hj,2

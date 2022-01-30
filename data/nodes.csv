@@ -1,0 +1,6 @@
+id,name,born_year,gender,father ,mother,child ,spouse,relative,position_current1,position_current_begin1,position_current2,position_current_begin2,position_past1,position_past_begin1,position_past_end1,hometown_name,hometown_begin,hometown_end,school_name,school_begin,school_end,battlefield_name,battlefield_begin,battlefield_end,business_partner_1,business_partner_2,endorsed_by_1,endorsed_by_2,workplace_name1,workplace_begin1,workplace_end1,workplace_name2,workplace_begin2,workplace_end2,circle_name1,circle_begin1,circle_end1
+pb01,Trong Nguyen,,,,,,,,,,,,,,,Saigon,1984,1992,NA,NA,NA,south,1955,1966,,,,,parliament ,2009,2014,central inspection,2014,2020,,,
+pb02,Hai Nguyen,,,,,,,,,,,,,,,Thanh,1955,1966,hn,1990,1993,south,1963,1965,,,,,trasportation,2010,2015,,,,PPP committee,2015,2020
+pb03,Hoa Le,,,,,,,,,,,,,,,Nam,1968,1969,hn,1989,1992,north,1960,1964,,,,,parliament ,2000,2014,central inspection,2018,2020,,,
+pb04,Hoa Tran,,,,,,,,,,,,,,,Hai,1970,1970,sg,1995,1997,NA,NA,NA,,,,,transportation,2011,2017,,,,PPP committee,2017,2020
+pb05,Vi Tran,,,,,,,,,,,,,,,Saigon,1971,1989,sg,1998,2000,NA,NA,NA,,,,,central bank,2009,2017,,,,,,
