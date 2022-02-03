@@ -1,1 +1,0 @@
-DL n=19Format = edgelist1Labels: pb01, pb02,   pb01 pb08 pb07pb02 pb04pb03 pb02pb04 pb02pb05 pb06pb06 pb05pb07 pb01pb08 pb01
