@@ -61,6 +61,7 @@ plot(personNet, vertex.size = 8,
      vertex.label.color = "black")
 ```
 
+## Term-to-term network
 ```{r, fig.width=8, fig.height=8}
 #To get the working term – to – working term matrix, multiply the transpose by the term matrix 
 # terms to term relations : how each branch terms connected to each other by seat - how a seat in one terms got carried to another term. 
@@ -113,8 +114,9 @@ elite_data %>%
 
 intersect(gov97_02_seats, gov1116_seats)
 ```
+# Tripartite network
 
-
+## Person to hometown network
 ```{r}
 person_to_hometown <- elite_data %>% add_count(person_name) %>% filter(n >=2) %>% select(person_name, hometown) %>% distinct() %>% arrange(hometown)
 
@@ -123,6 +125,7 @@ class(person_to_hometown_matrix) <- "matrix"
 
 ```
 
+## Terms to hometown network
 ```{r, fig.width=10, fig.height=10}
 
 terms_to_hometown <- t(person_to_hometown_matrix) %*% (termsMatrix)
