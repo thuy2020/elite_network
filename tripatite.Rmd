@@ -1,0 +1,90 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(tidyverse)
+library(dplyr)
+library(igraph)
+
+library(ggplot2)
+elite_data <- readRDS("elite_data.RDS")
+
+person_data <- elite_data %>% select(seatID, person_name) %>% add_count(person_name) %>% filter(n > 2) %>% select(-n)
+```
+
+```{r}
+personsMatrix = table(person_data)
+class(personsMatrix) <- "matrix"
+
+#Using the get.incidence() function will turn our matrix into a bipartite network.
+personsNet <- graph.incidence(personsMatrix, mode = c("all"))
+plot(personsNet, 
+     vertex.label.cex = .6, 
+     vertex.label.color = "black")
+
+#change the shape of nodes to highlight their type.
+
+V(personsNet)$shape <- ifelse(V(personsNet)$type == FALSE, "circle", "square")
+plot(personsNet, 
+vertex.label.cex = .6, 
+vertex.label.color = "black")
+```
+
+```{r}
+#seats will be the only nodes, and they will be connected if they share an affiliation = same person
+#multiplying the incidence matrix by its transpose
+seatsMatrix = personsMatrix %*% t(personsMatrix) 
+
+number_of_persons = diag(seatsMatrix)
+diag(seatsMatrix) <- 0 
+# View(personMatrix)
+
+seatsNet <- graph.adjacency(seatsMatrix, mode = "undirected")
+
+plot(seatsNet, 
+     vertex.size = 5, 
+     vertex.label.cex = .4, 
+     vertex.label.color = "black",
+     layout = layout.auto)
+```
+
+
+```{r}
+#To get the group-to-group matrix (person-to-oerson), we multiply the transpose by the initial matrix 
+groupMatrix = t(personsMatrix) %*% personsMatrix
+number_of_seats <- diag(groupMatrix)
+
+diag(groupMatrix) <- 0
+
+# seats belong to same person
+seatsNet <- graph.adjacency(seatsMatrix, mode = "undirected")
+plot(seatsNet, vertex.label.cex = .6, vertex.label.color = "black")
+
+#
+groupNet <- graph.adjacency(groupMatrix, mode = "undirected")
+
+plot(groupNet, 
+     vertex.size = betweenness(groupNet)/(max(betweenness(groupNet))+1) * 10, 
+     vertex.label.cex = .6, 
+     vertex.label.color = "black")
+```
+
+```{r}
+person_to_hometown <- elite_data %>% filter(person_name %in% person_data$person_name) %>% 
+  select(person_name, hometown)
+
+person_to_hometown_matrix <- table(person_to_hometown)
+class(person_to_hometown_matrix) <- "matrix"  
+```
+
+```{r}
+seats_to_hometown <- t(person_to_hometown_matrix) %*% t(personsMatrix)
+
+seats_to_hometown_net <- graph.incidence(seats_to_hometown)
+plot(seats_to_hometown_net, vertex.label.cex = .6, vertex.label.color = "black")
+```
+

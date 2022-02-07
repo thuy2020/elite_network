@@ -12,134 +12,114 @@ library(igraph)
 library(ggplot2)
 ```
 
+# Elite data
 ```{r}
 d <- rio::import(here::here("data", "po_gov.xlsx")) %>% 
   mutate(person_name = str_to_lower(person_name), 
          hometown = str_to_lower(hometown)) %>% 
   mutate(branch = ifelse(str_detect(seatID, "pol"), "Politburo", "Government")
-         ) %>%  # pol = 1, gov = 0
-select(-c(year_birth, enter_party))
+         )   # pol = 1, gov = 0
 
-saveRDS(d, "elite_data.RDS")
-```
-
-# Overall 
-```{r}
-
- d %>% 
-  add_count(hometown) %>% arrange(desc(n)) %>% drop_na(hometown) %>% 
-  mutate(hometown = fct_reorder(hometown, n)) %>% 
-  filter(n >= 5) %>% 
+d <- d %>% 
+  mutate(year_starting_term = case_when(year_branch_term_serve == "pol96_01" ~ 1996,
+                                        year_branch_term_serve == "gov97_02" ~ 1997,
+                                        
+                                        year_branch_term_serve == "pol01_06" ~ 2001, 
+                                        year_branch_term_serve == "gov02_07" ~ 2002,
+                                        
+                                        year_branch_term_serve == "pol06_11" ~ 2006,
+                                        year_branch_term_serve == "gov07_11" ~ 2007,
+                                        
+                                        term_serve == "06_011" ~ 2006,
+                                        term_serve == "11_16" ~ 2011,
+                                        term_serve == "16_21" ~ 2016,
+                                        term_serve == "21_26" ~ 2021,
+                                        )) %>% 
   
-ggplot(aes(hometown)) +
- geom_bar(fill="#69b3a2", alpha=.8, width=.4) +
-  coord_flip() +
-  #facet_wrap(~branch)+
-  labs(
-    x = "",
-    y= "Count of seats",
-    title = "Hometowns fill at least 5 seats in the Politburo and the Government",
-    subtitle = "Years: 2001 ~ 2026"
-  ) +
-  theme_minimal()
+  mutate(year_to_retire = ifelse(gender == "M", year_birth + 62, year_birth + 60),
+         year_working_left =  year_to_retire - year_starting_term
+             ) 
 
-# highlight region 
- # south <- d %>% 
- #  add_count(hometown) %>% arrange(desc(n)) %>% drop_na(hometown) %>% 
- #  mutate(hometown = fct_reorder(hometown, n)) %>% 
- #  filter(hometown %in% c("quang nam", "ca mau", "ben tre", "long an", "tra vinh", "dong thap"))
-  
-```
-# Seats by branches
+#saveRDS(d, "elite_data.RDS")
 
-```{r}
+# unique individuals 
+
 d %>% 
-  add_count(hometown) %>% arrange(desc(n)) %>% drop_na(hometown) %>% 
-  mutate(hometown = fct_reorder(hometown, n)) %>% 
-  filter(n >= 5) %>% 
-ggplot(aes(hometown)) +
- geom_bar(fill="tomato", alpha=.6, width=.4) +
-  coord_flip() +
-  facet_wrap(~branch)+
-  labs(
-    x = "",
-    y= "Count of seats",
-    title = "Hometowns fill more than 5 seats in each branch",
-    subtitle = "Years: 2001 ~ 2026"
-  )  +
-  theme_minimal()
-```
-# Five hometowns by terms
-
-```{r}
+  select(person_name) %>% distinct()
+# seats and persons in politburo
 d %>% 
-  group_by(term_serve) %>% 
-  add_count(hometown) %>% arrange(desc(n)) %>% drop_na(hometown) %>% 
-  mutate(hometown = fct_reorder(hometown, n)) %>% 
-  filter(hometown %in% c("ha noi", "nam dinh", "nghe an", "ha tinh", "thanh hoa")) %>% 
-  select(term_serve, n, hometown) %>% distinct() %>% 
-  
-  ggplot(aes(term_serve, n, group = hometown)) +
-  geom_line(aes(color = hometown), size = 1.5) +
-  labs(
-    title = "Change in number of seats per hometown across 5 terms",
-    x = "Term",
-    y = "Count of seats",
-  ) +
-scale_color_brewer(palette="Paired") +
-  theme_minimal()
-```
-# Five hometowns across term by branches 
+  filter(grepl("pol.*", seatID)) %>% select(person_name) %>% distinct()
 
-```{r}
+
+# seats and persons in politburo
 d %>% 
-  group_by(term_serve) %>% 
-  add_count(hometown) %>% arrange(desc(n)) %>% drop_na(hometown) %>% 
-  mutate(hometown = fct_reorder(hometown, n)) %>% 
-  filter(hometown %in% c("ha noi", "nam dinh", "nghe an", "ha tinh", "thanh hoa")) %>% 
-  select(term_serve, n, hometown, branch) %>% distinct() %>% 
-  
-  ggplot(aes(term_serve, n, group = hometown)) +
-  geom_line(aes(color = hometown), size = 1.5) +
-  facet_wrap(~branch) +
-  labs(
-    title = "Change in number of seats per hometown across 5 terms",
-    x = "Term",
-    y = "Count of seats",
-  ) +
-scale_color_brewer(palette="Paired") +
-  theme_minimal()
+  filter(grepl("gov.*", seatID)) %>% select(person_name) %>% distinct()
+select(person_name)
+
+# female
+d %>% 
+  filter(gender == "F") %>% select(person_name) %>% distinct()
+
+
 ```
 
-# Proportion of seat per term
+
+# FDI data
+2018: https://www.mpi.gov.vn/Pages/tinbai.aspx?idTin=41920&idcm=208
+
 ```{r}
-d_ggplot %>% 
-  group_by(term_serve) %>% 
-  add_count(hometown)
-  mutate(hometown_prop = )
-  
-   d %>% 
-  drop_na(hometown) %>% 
-  group_by(term_serve, branch) %>% 
-  add_count(term_serve) %>% 
-  rename(seat_per_branch_term = n) %>% 
-     ungroup() %>% 
-     group_by(term_serve, branch) %>% 
-     add_count(hometown) %>% 
-     mutate(prop_hometown_seat = n/seat_per_branch_term)  
+fdi2013 <- import(here("data", "FDI 12.2013.xls"), sheet = 3) %>% 
+  select(province = `Địa phương`,
+       fdi_2013 = `Vốn đăng ký cấp mới và tăng thêm (triệu USD)`)
 
-   
-ggplot(aes(hometown, prop_hometown_seat)) +
- geom_col(fill="#69b3a2", alpha=.8, width=.4) +
-  coord_flip() +
-  facet_wrap(~term_serve)+
-  labs(
-    x = "",
-    y= "Prop of seats",
-    title = "Hometowns ...",
-    subtitle = ""
-  )  +
-  theme_minimal()
+fdi2014 <- import(here("data", "FDI_12.2014.xls"), sheet = 3) %>% 
+  select(province = `Địa phương`,
+       fdi_2014 = `Vốn đăng ký cấp mới và tăng thêm (triệu USD)`)
+
+fdi2015 <- import(here("data", "FDI 12.2015 31-12-2015 final.xls"), sheet = 3) %>% 
+  select(province = `Địa phương`,
+       fdi_2015 = `Vốn đăng ký cấp mới và tăng thêm (triệu USD)`) %>% 
+  mutate(province = ifelse(province == "TP Hồ Chí Minh", "TP. Hồ Chí Minh", province))
+
+
+fdi2016 <- import(here("data", "FDI2016.xls"), sheet = 3) %>% 
+  select(province = `...2`,
+       fdi_2016 = `Tổng vốn đăng ký cấp mới, vốn tăng thêm và Vốn góp (triệu USD)`)
+
+fdi2017 <- import(here("data", "FDI_12.2017.xls"), sheet = 3) %>% 
+  select(province = `Địa phương`,
+       fdi_2017 = `Tổng vốn đăng ký (triệu USD)`)
+
+fdi2018 <- import(here("data", "FDI_12.2018.xls"), sheet = 3) %>% 
+  select(province = `Địa phương`,
+       fdi_2018 = `Tổng vốn đăng ký (triệu USD)`)
+
+fdi2019 <- import(here("data", "FDI_2019.xls"), sheet = 3) %>% 
+  select(province = `Địa phương`,
+       fdi_2019 = `Tổng vốn đăng ký (triệu USD)`)
+
+fdi2020 <- import(here("data", "FDI_12.2020.xlsx"), sheet = 3) %>% 
+  select(province = `Địa phương`, english_name,
+       fdi_2020 = `Tổng vốn đăng ký (triệu USD)`)
+
+fdi13_20 <- fdi2013 %>% 
+  full_join(fdi2014) %>% 
+    mutate(province = ifelse(province == "TP Hồ Chí Minh", "TP. Hồ Chí Minh", province),
+           province = ifelse(province == "Bà Rịa-Vũng Tàu", "Bà Rịa - Vũng Tàu", province),
+           province = ifelse(province == "Đắc Lắc", "Đăk Lăk", province),
+           province = ifelse(province == "Thừa Thiên-Huế", "Thừa Thiên Huế", province)) %>% 
+  full_join(fdi2015) %>% 
+  full_join(fdi2016) %>% 
+  full_join(fdi2017) %>% 
+  full_join(fdi2018) %>% 
+  full_join(fdi2019) %>% 
+  full_join(fdi2020) %>% # hand typed english name of provinces in fdi2020 to join with elite data
+  drop_na(province) %>% 
+  filter(province != "Dầu khí") %>% select(-province) %>% 
+  rename(hometown = english_name)
+
+#saveRDS(fdi13_20, "fdi13_20.RDS")
+
+fdi13_20
 ```
-
 

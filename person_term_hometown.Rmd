@@ -1,0 +1,142 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(tidyverse)
+library(dplyr)
+library(igraph)
+
+library(ggplot2)
+elite_data <- readRDS("elite_data.RDS")
+
+# persons occupied >=2 seats in all terms
+terms_data <- elite_data %>% 
+  select(person_name, year_branch_term_serve) %>%
+  add_count(person_name) %>% 
+  filter(n >=2) %>% 
+  arrange(year_branch_term_serve) %>% select(-n)
+```
+Example: https://bookdown.org/markhoff/social_network_analysis/affiliation-data.html#tripartite-network-analysis
+```{r, fig.width=6, fig.height=6}
+
+#incidence matrix: the rows are persons' name, while columns are working terms
+termsMatrix <- table(terms_data)
+class(termsMatrix) <- "matrix" # convert to a matrix
+
+# turn matrix into a bipartite network.
+termsNet <- graph.incidence(termsMatrix, mode = c("all"))
+plot(termsNet, 
+     vertex.frame.color="transparent",
+     vertex.label.cex = .6, 
+     vertex.label.color = "black")
+
+#change the shape of nodes to highlight their type.
+
+V(termsNet)$shape <- ifelse(V(termsNet)$type == FALSE, "circle", "square")
+
+plot(termsNet, 
+vertex.label.cex = .8, 
+vertex.frame.color="transparent",
+vertex.label.color = "black")
+```
+
+```{r, fig.width=8, fig.height=8}
+#people will be the only nodes, and they will be connected if they share an affiliation
+#multiplying the incidence matrix by its transpose
+personMatrix <- termsMatrix %*% t(termsMatrix) 
+
+number_of_term_worked = diag(personMatrix)
+diag(personMatrix) <- 0 
+
+personNet <- graph.adjacency(personMatrix, mode = "undirected")
+
+plot(personNet, vertex.size = 8, 
+     vertex.label.cex = .8, 
+     vertex.label = NA,
+     vertex.frame.color = "transparent",
+     vertex.label.color = "black")
+```
+
+```{r, fig.width=8, fig.height=8}
+#To get the working term – to – working term matrix, multiply the transpose by the term matrix 
+# terms to term relations : how each branch terms connected to each other by seat - how a seat in one terms got carried to another term. 
+#Eg. pol_2021_2026 has no shared person with gov_2002_2007, 7 with gov_2016_2021, 4 with gov_2021_2026
+
+term_to_termMatrix <- t(termsMatrix) %*% termsMatrix
+number_of_terms <- diag(term_to_termMatrix)
+diag(term_to_termMatrix) <- 0
+
+#network object
+term_to_termNet <- graph.adjacency(term_to_termMatrix, mode = "undirected")
+
+# different ways to express vertex size
+
+plot(term_to_termNet, 
+     vertex.size = betweenness(term_to_termNet)/max(betweenness(term_to_termNet)) * 20, 
+     vertex.label.cex = .6, vertex.label.color = "black")
+
+# set layout to be the same very time run, not sure this works
+my_layout <- layout_nicely(term_to_termNet)
+plot(term_to_termNet, 
+     vertex.size = degree(term_to_termNet)*0.5, 
+     vertex.label.cex = 1, 
+     vertex.frame.color="transparent",
+     vertex.label.color = "white",
+     layout = my_layout)
+```
+
+```{r}
+# closer look at gterm_to_termMatrix: pol16_21 has 17 seats --> pol21_26 has 18 seats ==> sharing 7 seats 
+elite_data %>% 
+  filter(year_branch_term_serve == "pol16_21" | year_branch_term_serve == "pol21_26"
+           ) %>% select(person_name) %>% distinct()
+
+# test: gov_2011_2016 has 52 seats occupied by 48 persons. gov_2016_2021 has 34 seats by 33 persons#--> both share 32 seats by 26 persons
+# --> 
+elite_data %>% 
+  filter(year_branch_term_serve == "gov11_16"
+           ) %>% select(person_name) %>% distinct() -> gov1116_seats 
+
+elite_data %>% 
+  filter(year_branch_term_serve == "gov16_21"
+           ) %>% select(person_name) %>% distinct() -> gov1621_seats 
+intersect(gov1116_seats, gov1621_seats) %>% distinct()
+
+# 1 person, nguyen tan dung, lasting from 1st gov term to gov 11-16
+elite_data %>% 
+  filter(year_branch_term_serve == "gov97_02"
+           ) %>% select(person_name) %>% distinct() -> gov97_02_seats
+
+intersect(gov97_02_seats, gov1116_seats)
+```
+
+
+```{r}
+person_to_hometown <- elite_data %>% add_count(person_name) %>% filter(n >=2) %>% select(person_name, hometown) %>% distinct() %>% arrange(hometown)
+
+person_to_hometown_matrix <- table(person_to_hometown)
+class(person_to_hometown_matrix) <- "matrix"  
+
+```
+
+```{r, fig.width=10, fig.height=10}
+
+terms_to_hometown <- t(person_to_hometown_matrix) %*% (termsMatrix)
+
+terms_to_hometown_net <- graph.incidence(terms_to_hometown)
+
+degree <- degree(terms_to_hometown_net, mode = "all")
+V(terms_to_hometown_net)$color <- ifelse(V(terms_to_hometown_net)$type, "lightblue", "salmon")
+plot(terms_to_hometown_net, 
+     vertex.label.cex = .6, 
+     vertex.label.color = "black", 
+     vertex.frame.color="transparent",
+     vertex.size = .5*degree,
+     layout=layout.fruchterman.reingold)
+```
+
+
