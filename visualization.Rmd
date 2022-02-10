@@ -25,7 +25,7 @@ d <- readRDS("elite_data.RDS")
   
   # how many province? # how many seats?
   select(hometown, n) %>% distinct() %>% 
-  mutate(sum_n = sum(n))
+  mutate(sum_n = sum(n)) 
 
 ggplot(aes(hometown)) +
  geom_bar(fill="darkgreen", alpha=.8, width=.5) +

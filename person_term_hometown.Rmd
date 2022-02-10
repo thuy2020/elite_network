@@ -9,16 +9,23 @@ library(stringr)
 library(tidyverse)
 library(dplyr)
 library(igraph)
-
 library(ggplot2)
+
 elite_data <- readRDS("elite_data.RDS")
 
+```
+
+# Person - to - term (Person >= 2 seats)
+```{r}
 # persons occupied >=2 seats in all terms
 terms_data <- elite_data %>% 
   select(person_name, year_branch_term_serve) %>%
   add_count(person_name) %>% 
   filter(n >=2) %>% 
   arrange(year_branch_term_serve) %>% select(-n)
+
+elite_data %>% distinct(person_name)
+terms_data %>% distinct(person_name)
 ```
 Example: https://bookdown.org/markhoff/social_network_analysis/affiliation-data.html#tripartite-network-analysis
 ```{r, fig.width=6, fig.height=6}
@@ -26,29 +33,34 @@ Example: https://bookdown.org/markhoff/social_network_analysis/affiliation-data.
 #incidence matrix: the rows are persons' name, while columns are working terms
 termsMatrix <- table(terms_data)
 class(termsMatrix) <- "matrix" # convert to a matrix
-
+termsMatrix %>% head(10)
 # turn matrix into a bipartite network.
 termsNet <- graph.incidence(termsMatrix, mode = c("all"))
+
 plot(termsNet, 
      vertex.frame.color="transparent",
      vertex.label.cex = .6, 
      vertex.label.color = "black")
 
 #change the shape of nodes to highlight their type.
-
 V(termsNet)$shape <- ifelse(V(termsNet)$type == FALSE, "circle", "square")
 
 plot(termsNet, 
 vertex.label.cex = .8, 
 vertex.frame.color="transparent",
 vertex.label.color = "black")
+
+elite_data %>% 
+  filter(year_branch_term_serve %in% c("gov02_07")) #, "gov02_07", "gov11_16"
+  filter(person_name == "cao duc phat")
 ```
 
+# Person - to - person
 ```{r, fig.width=8, fig.height=8}
 #people will be the only nodes, and they will be connected if they share an affiliation
 #multiplying the incidence matrix by its transpose
 personMatrix <- termsMatrix %*% t(termsMatrix) 
-
+personMatrix %>% head(10)
 number_of_term_worked = diag(personMatrix)
 diag(personMatrix) <- 0 
 
@@ -61,7 +73,7 @@ plot(personNet, vertex.size = 8,
      vertex.label.color = "black")
 ```
 
-## Term-to-term network
+# Term-to-term network
 ```{r, fig.width=8, fig.height=8}
 #To get the working term – to – working term matrix, multiply the transpose by the term matrix 
 # terms to term relations : how each branch terms connected to each other by seat - how a seat in one terms got carried to another term. 
@@ -90,6 +102,7 @@ plot(term_to_termNet,
      layout = my_layout)
 ```
 
+Examine the plot above 
 ```{r}
 # closer look at gterm_to_termMatrix: pol16_21 has 17 seats --> pol21_26 has 18 seats ==> sharing 7 seats 
 elite_data %>% 
@@ -118,7 +131,10 @@ intersect(gov97_02_seats, gov1116_seats)
 
 ## Person to hometown network
 ```{r}
-person_to_hometown <- elite_data %>% add_count(person_name) %>% filter(n >=2) %>% select(person_name, hometown) %>% distinct() %>% arrange(hometown)
+person_to_hometown <- elite_data %>% 
+  add_count(person_name) %>% 
+  filter(n >=2) %>% 
+  select(person_name, hometown) %>% distinct() %>% arrange(hometown)
 
 person_to_hometown_matrix <- table(person_to_hometown)
 class(person_to_hometown_matrix) <- "matrix"  
