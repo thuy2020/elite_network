@@ -80,6 +80,7 @@ d %>% select(hometown) %>%
   add_count(hometown) %>% 
   arrange(desc(n)) %>% distinct() %>% slice(1:5) %>% mutate(sum_n = sum(n))
 
+d_p %>% filter(hometown == "ha tinh")
 ```
 
 
@@ -87,10 +88,20 @@ d %>% select(hometown) %>%
 ```{r}
 
 d_p %>% 
-  ggplot(aes(year_starting_term, n, group = hometown)) +
-  geom_line(aes(color = hometown), size = 1.5) +
+  select(year_starting_term, n, hometown) %>%  arrange(year_starting_term) %>% 
   
-  # need to place the text lable separately to not be overlapping 
+  # government terms lagged 1 years for 3 terms from 96 to 20066, collapse these 2 years for better graph
+  mutate(year_starting_term = ifelse(year_starting_term == 1997, 1996, year_starting_term)) %>% 
+  mutate(year_starting_term = ifelse(year_starting_term == 2007, 2006, year_starting_term)) %>%
+  mutate(year_starting_term = ifelse(year_starting_term == 2002, 2001, year_starting_term)) %>% distinct() %>% 
+  
+  ggplot(aes(year_starting_term, n, group = hometown)) +
+  geom_line(aes(color = hometown), size = 1.5, position=position_jitter(w=0.02, h=0.15)) + # avoid overlapping lines
+  geom_point(fill = "black", color = "darkblue", size = 5) +
+  geom_text(aes(label = n), color = "white") + 
+
+  
+  # need to place the text label separately to not be overlapping 
   geom_text(data = d_p %>% filter(year_starting_term == 2021 & hometown == "nam dinh"),
     aes(label = hometown, color = hometown,
         x = year_starting_term - 2))+
@@ -102,26 +113,24 @@ d_p %>%
   
   geom_text(data = d_p %>% filter(year_starting_term == 2021 & hometown == "nghe an"),
     aes(label = hometown, color = hometown,
-        x = 2020, 
-        y = 5))+
+        x = 2019, 
+        y = 4.8))+
   
    geom_text(data = d_p %>% filter(year_starting_term == 2021 & hometown == "ha tinh"),
     aes(label = hometown, color = hometown,
-        x = 2015, 
+        x = 2014, 
         y = 4))+
   
      geom_text(data = d_p %>% filter(year_starting_term == 2021 & hometown == "thanh hoa"),
     aes(label = hometown, color = hometown,
         x = 2020, 
-        y = 2.5))+
+        y = 2.3))+
   
-   # geom_text(data = d_p %>% filter(year_starting_term == 2021 & hometown == "quang nam"),
-   #  aes(label = hometown, 
-   #      x = 2020, 
-   #      y = 1))+
+  scale_x_discrete(limits = c(1996, 2001, 2006, 2011, 2016, 2021)) +
+  scale_y_discrete(limits = c(2, 4, 6, 8)) +
   
   labs(
-    title = "Change in number of seats per hometown across 6 terms (1996 ~ 2022)",
+    title = "Change in number of seats in the top 5 provinces 1996 ~ 2022",
     x = "Year",
     y = "Count of seats",
     caption = "Souce: Data collected by author"
@@ -129,6 +138,8 @@ d_p %>%
   guides(color = FALSE) +
 scale_color_brewer(palette="Paired") +
   theme_minimal()
+
+#ggsave("top5_hometown.png")
 
 ```
 
@@ -159,10 +170,7 @@ d_p %>% filter(term_serve == "21_26") %>%
 
 ```
 
-```{r}
 
-
-```
 
 ## Five hometowns across term by branches - line, facet 
 
@@ -256,14 +264,16 @@ ggplot(aes(hometown, prop_hometown_seat)) +
 #Age
 
 ```{r}
-d %>% 
-  ggplot(aes(year_working_left)) +
-  geom_histogram(fill = "#7F5088", color = "white") +
-  facet_grid(~branch) +
+
+  ggplot(data = d %>% filter(branch == "Politburo"), aes(year_working_left)) +
+  geom_histogram(fill = "#7F5088", color = "white", alpha = .8) +
+  geom_histogram(data = d %>% filter(branch != "Politburo"), fill = "lightblue", color = "white", alpha = .6) +
+  annotate("text", label = "Politburo", color = "#7F5088", x = -10, y = 22) + 
+  annotate("text", label = "Government", color = "lightblue", x = 15, y = 22) + 
   labs(
-    x = "Number of year left",
+    x = "Number of working year left",
     y = "Number of people",
-    title = "Distribution of number of working year left by the time a person starts the term",
+    title = "Distribution of number of working year left by the time starting a term",
     subtitle = "Retire age: 62 for men, 60 for women"
   ) +
   theme_minimal()
@@ -292,19 +302,48 @@ d %>%
 ## Mean age each term
 ```{r}
 
-d %>% 
+age_dp <- d %>% 
   mutate(age_by_beginning_term = year_starting_term - year_birth) %>% 
   group_by(term_serve, branch) %>% 
   mutate(mean_age = mean(age_by_beginning_term, na.rm = TRUE)) %>% 
-  select(term_serve, branch, mean_age) %>% distinct() %>% 
+  select(term_serve, branch, mean_age, age_by_beginning_term) %>% distinct() %>% 
+  ungroup() %>% 
+  group_by(term_serve) %>% 
+  mutate(mean_age_2branches_term = mean(age_by_beginning_term, na.rm = TRUE)) %>% select(-age_by_beginning_term) %>%
+  rename("Both branches" = mean_age_2branches_term) %>% 
+  distinct()
   
-  ggplot(aes(term_serve, mean_age, group = branch)) +
-  geom_line(aes(color = branch), size = 1.5) +
+
+age_dp %>% 
+  pivot_wider(names_from = branch, 
+              values_from = mean_age) %>% 
+  pivot_longer(cols = 2:4,
+               names_to = "age",
+               values_to = "value") %>% 
+  # mutate(year_starting_term = ifelse(year_starting_term == 1997, 1996, year_starting_term),
+  #        year_starting_term = ifelse(year_starting_term == 20077, 2006, year_starting_term))
+  
+mutate(term_serve_year = case_when(term_serve == "96_01" ~ 1996, 
+                                   term_serve == "01_06" ~ 2001,
+                                   term_serve == "06_11" ~ 2006,
+                                   term_serve == "11_16" ~ 2011,
+                                   term_serve == "16_21" ~ 2016,
+                                   term_serve == "21_26" ~ 2021)) %>% 
+
+ggplot(aes(term_serve_year, value, group = age)) +
+  geom_line(aes(color = age), size = 1.5) +
+  annotate("text", label = "Politburo", x = 2019, y = 62.5) + 
+  annotate("text", label = "Both branches", x = 2018, y = 58) + 
+  annotate("text", label = "Government", x = 2018, y = 55) + 
+  
+  scale_x_discrete(limits = c(1996, 2001, 2006, 2011, 2016, 2021)) +
   labs(
     x = "Term", 
     y = "Age",
-    title = "Average age of the member each term in the politburo and the government"
+    title = "Average age of the members in the politburo and the government"
   ) +
+  scale_color_brewer(palette = 1) +
+  guides(color = FALSE) +
   theme_minimal()
 
 ```

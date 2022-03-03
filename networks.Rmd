@@ -176,7 +176,7 @@ delete_vertices(g, V(g)['thanh hoa'])
 centralization.degree(g, normalized = T)
 ```
 
-#Function - Network for each term 
+# Function - Network & Centralization of each term 
 
 ```{r}
 hometown_structure <- function(term){
@@ -193,9 +193,60 @@ V(g)$type <- bipartite_mapping(g)$type
 # Create new vertex attribute called 'branch', take the value of branch in data
 g <- set_vertex_attr(g, "branch", value = data$branch)
 
-V(g)$colorbranch <- ifelse(V(g)$branch == "Politburo", "red", "blue") #???? DOESNT work?
+V(g)$colorbranch <- ifelse(V(g)$branch == "Politburo", "#FC8E62", "#71AB7E") #???? DOESNT work?
 
-V(g)$color <- ifelse(V(g)$type, "lightblue", "salmon")
+V(g)$color <- ifelse(V(g)$type, "#71AB7E", "#FC8E62")
+V(g)$shape <- ifelse(V(g)$type, "circle", "square") # circle = hometown, square = seat
+E(g)$color <- "lightgray"
+
+degree <- degree(g, mode = "all")
+par(mar = c(0, 0, 0, 0))
+plot(g, 
+     vertex.label.cex = 0.5, 
+     vertex.frame.color="transparent",
+     #vertex.label = NA,
+     vertex.label.dist = 1.5, 
+     vertex.size = 4*degree,
+     layout = layout_nicely
+     )
+centrality <- centralization.degree(g, normalized = T)
+#title(paste0(c("Term", term, "Network centralization:", round(centrality$centralization, 3))))
+title(paste0(c("Term: ", term)))
+}
+
+hometown_structure("96_01")
+hometown_structure("01_06")
+hometown_structure("06_11")
+hometown_structure("11_16")
+hometown_structure("16_21")
+hometown_structure("21_26")
+
+
+
+centralization_all <- c(0.081, 0.061, 0.118, 0.078, 0.049, 0.081)
+```
+
+# Function - Network & Centralization of each branch 
+
+```{r}
+centralization_pol_byterm <- function(term){
+# filter for each term 
+data <- elite_data %>% 
+  filter(branch == "Politburo") %>% 
+  filter(term_serve == term) %>% drop_na(hometown) %>% 
+  select(seatID, hometown, branch)
+
+term0 <- data %>% select(seatID, hometown)
+g <- graph.data.frame(term0, directed = FALSE)
+
+V(g)$type <- bipartite_mapping(g)$type
+
+# Create new vertex attribute called 'branch', take the value of branch in data
+g <- set_vertex_attr(g, "branch", value = data$branch)
+
+V(g)$colorbranch <- ifelse(V(g)$branch == "Politburo", "#FC8E62", "#71AB7E") #???? DOESNT work?
+
+V(g)$color <- ifelse(V(g)$type, "#438D75", "#D8B366")
 V(g)$shape <- ifelse(V(g)$type, "circle", "square") # circle = hometown, square = seat
 E(g)$color <- "lightgray"
 
@@ -209,13 +260,92 @@ plot(g,
      layout=layout.fruchterman.reingold
      )
 centrality <- centralization.degree(g, normalized = T)
-title(paste(c("Hometown structure term", term, "Network centralization: ", round(centrality$centralization, 3))))
+title(paste0(c("Term", term, "Network centralization:", round(centrality$centralization, 3))))
 }
-hometown_structure("01_06")
-hometown_structure("06_11")
-hometown_structure("11_16")
-hometown_structure("16_21")
-hometown_structure("21_26")
+
+centralization_pol_byterm("96_01")
+centralization_pol_byterm("01_06")
+centralization_pol_byterm("06_11")
+centralization_pol_byterm("11_16")
+centralization_pol_byterm("16_21")
+centralization_pol_byterm("21_26")
+
+centralization_pol <- c(0.047, 0.034, 0.074, 0.068, 0.03, 0.06)
+
+
+```
+
+```{r}
+centralization_gov_byterm <- function(term){
+# filter for each term 
+data <- elite_data %>% 
+  filter(branch != "Politburo") %>% 
+  filter(term_serve == term) %>% drop_na(hometown) %>% 
+  select(seatID, hometown, branch)
+
+term0 <- data %>% select(seatID, hometown)
+g <- graph.data.frame(term0, directed = FALSE)
+
+V(g)$type <- bipartite_mapping(g)$type
+
+# Create new vertex attribute called 'branch', take the value of branch in data
+g <- set_vertex_attr(g, "branch", value = data$branch)
+
+V(g)$colorbranch <- ifelse(V(g)$branch == "Politburo", "#FC8E62", "#71AB7E") #???? DOESNT work?
+
+V(g)$color <- ifelse(V(g)$type, "#9279AA", "#EEEF88")
+V(g)$shape <- ifelse(V(g)$type, "circle", "square") # circle = hometown, square = seat
+E(g)$color <- "lightgray"
+
+degree <- degree(g, mode = "all")
+plot(g, 
+     vertex.label.cex = 0.5, 
+     vertex.frame.color="transparent",
+     #vertex.label = NA,
+     vertex.label.dist = 1, 
+     vertex.size = 5*degree,
+     layout=layout.fruchterman.reingold
+     )
+centrality <- centralization.degree(g, normalized = T)
+title(paste0(c("Term", term, "Network centralization:", round(centrality$centralization, 3))))
+}
+
+centralization_gov_byterm("96_01")
+centralization_gov_byterm("01_06")
+centralization_gov_byterm("06_11")
+centralization_gov_byterm("11_16")
+centralization_gov_byterm("16_21")
+centralization_gov_byterm("21_26")
+
+terms <- c("96_01", "01_06", "06_11", "11_16", "16_21", "21_26")
+year <- c(1996, 2001, 2006, 2011, 2016, 2021)
+centralization_gov <- c(0.091, 0.066, 0.105, 0.073, 0.052, 0.084)
+```
+
+# Centralization 
+```{r}
+df_centralization <- tibble(terms, year, centralization_all, centralization_pol, centralization_gov)
+
+df_centralization %>% 
+  pivot_longer(cols = 3:5, 
+               names_to = "centralization",
+               values_to = "value") %>% 
+  ggplot(aes(year, value, group = centralization))+
+  geom_line(aes(color = centralization), size = 2) +
+  annotate("text", x = 2020, y = 0.04, label = "Politburo") + 
+  
+  annotate("text", x = 2018, y = 0.08, label = "Government") + 
+  annotate("text", x = 2020, y = 0.068, label = "Overall") + 
+  
+  labs(x = "", 
+       y = "Centralization Degree", 
+       title = "Degree of Centralization in Each Branch",
+       caption = "Data calculated by Author") +
+scale_color_brewer(palette = 3) +
+  scale_x_discrete(limits = c(1996, 2001, 2006, 2011, 2016, 2021)) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
 ```
 
 # Overall network
