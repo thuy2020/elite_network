@@ -24,8 +24,8 @@ d <- readRDS("elite_data.RDS")
   filter(n >= 5) %>% 
   
   # how many province? # how many seats?
-  select(hometown, n) %>% distinct() %>% 
-  mutate(sum_n = sum(n)) 
+  # select(hometown, n) %>% distinct() %>% 
+  # mutate(sum_n = sum(n)) 
 
 ggplot(aes(hometown)) +
  geom_bar(fill="darkgreen", alpha=.8, width=.5) +
@@ -143,9 +143,8 @@ scale_color_brewer(palette="Paired") +
 
 ```
 
-## explaining the above plot 
+## Explaining the above plot 
 ```{r}
-
 #first pol term
 d_p %>% filter(term_serve == "96_01") %>% 
   arrange(desc(n)) %>% 
@@ -170,12 +169,9 @@ d_p %>% filter(term_serve == "21_26") %>%
 
 ```
 
-
-
 ## Five hometowns across term by branches - line, facet 
 
 ```{r}
-
 d_p %>% 
   ggplot(aes(year_starting_term, n, group = hometown)) +
   geom_line(aes(color = hometown), size = 1.5) +
@@ -225,19 +221,12 @@ d_p %>%
   geom_col(aes(fill = hometown), position = "dodge") +
   scale_color_brewer(palette = "Paired") +
   theme_minimal()
-  
 
 ```
 
-
 # Proportion of seat per term
 ```{r}
-d_ggplot %>% 
-  group_by(term_serve) %>% 
-  add_count(hometown)
-  mutate(hometown_prop = )
-  
-   d %>% 
+  d %>% 
   drop_na(hometown) %>% 
   group_by(term_serve, branch) %>% 
   add_count(term_serve) %>% 
@@ -245,7 +234,7 @@ d_ggplot %>%
      ungroup() %>% 
      group_by(term_serve, branch) %>% 
      add_count(hometown) %>% 
-     mutate(prop_hometown_seat = n/seat_per_branch_term)  
+     mutate(prop_hometown_seat = n/seat_per_branch_term) %>% 
 
    
 ggplot(aes(hometown, prop_hometown_seat)) +
@@ -301,7 +290,6 @@ d %>%
 
 ## Mean age each term
 ```{r}
-
 age_dp <- d %>% 
   mutate(age_by_beginning_term = year_starting_term - year_birth) %>% 
   group_by(term_serve, branch) %>% 
@@ -348,17 +336,3 @@ ggplot(aes(term_serve_year, value, group = age)) +
 
 ```
 
-```{r}
-# number of member in the same cohort
-d %>% 
-  #filter(term_serve == "11_16") %>% 
-  filter(year_working_left <= 0) %>% 
-  #select(person_name, year_to_retire, year_working_left, year_birth) %>% 
-  ggplot(aes(year_working_left)) +
-  geom_bar(fill = "#7F5088", color = "white") +
-  facet_wrap(branch ~ term_serve, nrow = 2, ncol = 5) +
-  labs(
-    title = "Number of member exceeds working age limit at the beginning of each term"
-  ) +
-  theme_minimal()
-```

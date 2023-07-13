@@ -29,11 +29,12 @@ terms_data %>% distinct(person_name)
 ```
 Example: https://bookdown.org/markhoff/social_network_analysis/affiliation-data.html#tripartite-network-analysis
 ```{r, fig.width=6, fig.height=6}
-
 #incidence matrix: the rows are persons' name, while columns are working terms
 termsMatrix <- table(terms_data)
 class(termsMatrix) <- "matrix" # convert to a matrix
 termsMatrix %>% head(10)
+
+
 # turn matrix into a bipartite network.
 termsNet <- graph.incidence(termsMatrix, mode = c("all"))
 
@@ -51,7 +52,7 @@ vertex.frame.color="transparent",
 vertex.label.color = "black")
 
 elite_data %>% 
-  filter(year_branch_term_serve %in% c("gov02_07")) #, "gov02_07", "gov11_16"
+  filter(year_branch_term_serve %in% c("gov02_07")) %>%  #, "gov02_07", "gov11_16"
   filter(person_name == "cao duc phat")
 ```
 
@@ -61,6 +62,7 @@ elite_data %>%
 #multiplying the incidence matrix by its transpose
 personMatrix <- termsMatrix %*% t(termsMatrix) 
 personMatrix %>% head(10)
+
 number_of_term_worked = diag(personMatrix)
 diag(personMatrix) <- 0 
 
