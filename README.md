@@ -1,3 +1,5 @@
+## Intro
+
 The following R scripts are self-contained and reproducible. 
 
 To run the project: 
@@ -5,14 +7,14 @@ To run the project:
 2. Double-click to open elit_network.Rproj
 
 
-# Data Managerment
+## Data Managerment
 
 Read in and clean raw data: data_management.Rmd
 
-# Term Limit & Retirement Age
+## Term Limit & Retirement Age
 
 age_limit_visualization.Rmd
 
-# Network Analysis
+## Network Analysis
 
 network_analysis.Rmd
