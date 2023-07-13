@@ -54,7 +54,6 @@ d %>%
 # seats and persons in politburo
 d %>% 
   filter(grepl("gov.*", seatID)) %>% select(person_name) %>% distinct()
-select(person_name)
 
 # female
 d %>% 
