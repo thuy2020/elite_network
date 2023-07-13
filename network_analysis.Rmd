@@ -12,7 +12,6 @@ library(igraph)
 library(ggplot2)
 
 elite_data <- readRDS("elite_data.RDS")
-
 ```
 
 # Person - to - term (Person >= 2 seats)

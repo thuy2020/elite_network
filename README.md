@@ -1,4 +1,4 @@
-## Intro
+## Introduction
 
 The following R scripts are self-contained and reproducible. 
 
